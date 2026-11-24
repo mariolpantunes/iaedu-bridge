@@ -140,19 +140,32 @@ class CliTest(unittest.TestCase):
             )
 
 
-@unittest.skipIf(sys.platform.startswith("win"), "fake goose is a shell script")
+def fake_goose(folder: Path, out: Path, port: int) -> None:
+    """A `goose` on PATH that records its environment, calls the bridge, and exits 7."""
+    script = folder / "fake_goose.py"
+    script.write_text(
+        "import os, sys, urllib.request\n"
+        f"out = {str(out)!r}\n"
+        "keys = ('GOOSE_PROVIDER', 'GOOSE_MODEL', 'IAEDU_BRIDGE_API_KEY')\n"
+        "open(out, 'w').write(' '.join([os.environ[k] for k in keys] + sys.argv[1:]))\n"
+        f"req = urllib.request.Request('http://127.0.0.1:{port}/v1/models', "
+        "headers={'Authorization': 'Bearer bk'})\n"
+        "assert urllib.request.urlopen(req).status == 200\n"
+        "sys.exit(7)\n"
+    )
+    if sys.platform.startswith("win"):
+        (folder / "goose.cmd").write_text(f'@"{sys.executable}" "{script}" %*\r\n')
+    else:
+        exe = folder / "goose"
+        exe.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n')
+        exe.chmod(0o755)
+
+
 class GooseLauncherTest(unittest.TestCase):
     def test_runs_goose_with_provider_env_and_stops_the_bridge(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "env.txt"
-            exe = Path(tmp) / "goose"
-            exe.write_text(
-                f'#!/bin/sh\necho "$GOOSE_PROVIDER $GOOSE_MODEL $IAEDU_BRIDGE_API_KEY $*" > "{out}"\n'
-                f"python3 - <<EOF\nimport urllib.request\n"
-                f'print(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:{self.port()}/v1/models", '
-                f'headers={{"Authorization": "Bearer bk"}})).status)\nEOF\nexit 7\n'
-            )
-            exe.chmod(0o755)
+            fake_goose(Path(tmp), out, self.port())
             settings = config.Settings(
                 endpoint="http://x", api_key="k", channel_id="c", bridge_key="bk", model="iaedu-4o"
             )
