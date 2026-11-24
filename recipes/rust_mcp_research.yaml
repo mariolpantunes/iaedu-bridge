@@ -1,0 +1,30 @@
+version: 1.0.0
+title: Rust program driven by MCP research and memory
+description: Mixes the crepe-research MCP, the memory extension and the shell in one task.
+parameters:
+  - key: workdir
+    input_type: string
+    requirement: required
+    description: Empty directory to create the crate in.
+instructions: |
+  You are a research engineer. Work only inside {{ workdir }}. Use tools for facts; never invent them.
+prompt: |
+  1. Use the Wikipedia tools (wikipedia_search, then wikipedia_read) to get the Wikipedia article "Rust (programming language)". Extract: the year of the first stable release (1.0), and the name of the foundation that now stewards the language.
+  2. Store both facts with the memory extension (category "iaedu-bridge-test").
+  3. Create a Rust binary crate `facts` in {{ workdir }} (cargo new --vcs none) that defines those facts as constants, prints them, and has two unit tests asserting the values.
+  4. Run `cargo build` and `cargo test` and fix failures until both pass.
+  Finish with one short line: the two facts and the final `cargo test` result.
+extensions:
+  - type: platform
+    name: developer
+  - type: builtin
+    name: memory
+  - type: stdio
+    name: crepe-research
+    cmd: /home/mantunes/git/crepe-mcp/venv/bin/crepe-research
+    args: []
+    timeout: 300
+    available_tools:
+      - wikipedia_search
+      - wikipedia_read
+      - fetch_webpage

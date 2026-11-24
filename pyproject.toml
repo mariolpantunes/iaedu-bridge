@@ -1,0 +1,56 @@
+[project]
+name = "iaedu-bridge"
+version = "0.1.0"
+description = "OpenAI-compatible bridge for the IAedu chatbot API (GPT-4o, GPT-5.x): streaming, emulated tool calls, Goose provider"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.165.0",
+    "uvicorn>=0.54.0",
+    "httpx>=0.28.1",
+    "tiktoken>=0.14.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Environment :: Web Environment",
+]
+
+[project.scripts]
+iaedu-bridge = "iaedu_bridge.cli:main"
+
+[dependency-groups]
+test = ["coverage>=7.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.basedpyright]
+venvPath = "."
+venv = "venv"
+include = ["src"]
+typeCheckingMode = "standard"
+
+[tool.coverage.run]
+source = ["src"]
+branch = false
+
+[tool.coverage.report]
+fail_under = 90
+
+[tool.vulture]
+paths = ["src"]
+min_confidence = 70

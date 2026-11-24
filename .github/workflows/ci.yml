@@ -1,0 +1,44 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v10.4.0
+      # Tool versions match the ones installed on the development machine.
+      - name: Install lint tools
+        run: uv tool install ruff==0.17.1 && uv tool install basedpyright==1.40.2 && uv tool install vulture==2.16
+      - name: Sync environment
+        run: |
+          python -m venv venv
+          PY=$([ -x venv/bin/python ] && echo venv/bin/python || echo venv/Scripts/python)
+          $PY -m pip install -q --upgrade pip
+          $PY -m pip install -q --upgrade . --group test
+      - run: ruff check src
+      - run: ruff format --check src
+      - run: basedpyright
+      - run: vulture
+      - name: Unit tests and coverage
+        run: |
+          PY=$([ -x venv/bin/python ] && echo venv/bin/python || echo venv/Scripts/python)
+          PYTHONPATH=src $PY -m coverage run -m unittest discover -s tests -q
+          $PY -m coverage report
+      - name: Install as a uv tool and run it
+        run: |
+          uv tool install .
+          iaedu-bridge --version
+          iaedu-bridge goose-provider > /dev/null

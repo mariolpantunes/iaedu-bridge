@@ -1,0 +1,66 @@
+# The CI gate, moved to commit time (see .github/workflows/ci.yml).
+# Every hook is `language: system`: it runs the tool installed on this machine against
+# pyproject.toml, so commit and CI check the same thing. Whole-project tools use
+# `pass_filenames: false` because basedpyright and vulture must see every file.
+# Install with: pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=512]
+
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (src)
+        entry: ruff check src
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false
+
+      # Check-only: a hook that rewrites files mid-commit leaves staged and working trees different.
+      - id: ruff-format
+        name: ruff format --check (src)
+        entry: ruff format --check src
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false
+
+      - id: basedpyright
+        name: basedpyright
+        entry: basedpyright
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false
+
+      - id: vulture
+        name: vulture
+        entry: vulture
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false
+
+      - id: unittest
+        name: unittest
+        # PYTHONPATH=src tests the working tree, not an installed copy.
+        entry: env PYTHONPATH=src venv/bin/python -m unittest discover -s tests
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false
+
+      - id: coverage
+        name: coverage (unittest, --fail-under)
+        # Kept separate so a coverage drop reads as a coverage failure. The floor only ratchets up.
+        entry: >-
+          bash -c 'PYTHONPATH=src venv/bin/python -m coverage run
+          -m unittest discover -s tests -q && venv/bin/python -m coverage report --fail-under=90'
+        language: system
+        files: '(\.py$|^pyproject\.toml$)'
+        pass_filenames: false

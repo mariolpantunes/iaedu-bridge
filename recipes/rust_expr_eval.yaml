@@ -1,0 +1,24 @@
+version: 1.0.0
+title: Rust expression evaluator (multi-module, clippy)
+description: Larger code generation task with several modules, tests, clippy and a fix loop.
+parameters:
+  - key: workdir
+    input_type: string
+    requirement: required
+    description: Empty directory to create the crate in.
+instructions: |
+  You are a careful Rust engineer working in a shell. Work only inside {{ workdir }}.
+  Use the shell tool for every file write and command. Keep each file under 150 lines; write long files in several steps.
+prompt: |
+  Build a Rust library crate `calc` (cargo new --lib --vcs none) in {{ workdir }} with these modules:
+  - `lexer`: tokens for numbers (integers and decimals), + - * / ^ ( ) and unary minus.
+  - `parser`: recursive-descent parser producing an `Expr` AST with correct precedence (^ is right associative).
+  - `eval`: evaluates the AST to f64 and returns `Result<f64, CalcError>` (division by zero, bad syntax are errors, no panics).
+  - `lib.rs`: `pub fn calculate(input: &str) -> Result<f64, CalcError>`.
+  Add a binary `src/main.rs` that reads an expression from the first argument and prints the result or the error.
+  Write at least 12 unit tests across the modules (precedence, parentheses, unary minus, right associativity of ^, errors).
+  Then run `cargo build`, `cargo test` and `cargo clippy -- -D warnings`; fix every failure and repeat until all three pass.
+  Finish with one short line: the number of tests passed and whether clippy is clean.
+extensions:
+  - type: platform
+    name: developer

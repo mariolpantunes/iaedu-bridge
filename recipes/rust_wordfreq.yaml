@@ -1,0 +1,23 @@
+version: 1.0.0
+title: Rust word frequency CLI
+description: Generate, compile, test and fix a small Rust CLI (code generation plus a build loop).
+parameters:
+  - key: workdir
+    input_type: string
+    requirement: required
+    description: Empty directory to create the crate in.
+instructions: |
+  You are a careful Rust engineer working in a shell. Work only inside {{ workdir }}.
+  Use the shell tool for every file write and command; do not describe commands without running them.
+prompt: |
+  Create a Rust binary crate named `wordfreq` in {{ workdir }} (cargo new --vcs none).
+  Requirements:
+  1. `wordfreq <file>` prints the 10 most frequent words (lowercase, letters only, ties sorted alphabetically) as `count word`, one per line.
+  2. Put the counting logic in a function `pub fn top_words(text: &str, n: usize) -> Vec<(String, usize)>` in src/lib.rs, and the CLI in src/main.rs.
+  3. Add at least 4 unit tests in src/lib.rs (empty text, punctuation, ties, case folding).
+  4. Run `cargo build` and `cargo test`. If anything fails, read the error, fix the code and run again until both pass.
+  5. Create sample.txt with a short paragraph and run the binary on it.
+  Finish with one short line: the final `cargo test` result.
+extensions:
+  - type: platform
+    name: developer
